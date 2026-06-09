@@ -113,5 +113,5 @@ strg = {
 ## 🎯 Final Notes
 This module is built to be **Enterprise-Ready**. It follows Azure Best Practices for security and naming conventions.
 
-**Author:** प्रिया जायसवाल (Priya Jaiswal)  
+**Author:** Priya Jaiswal 
 **Role:** Terraform & DevOps Architect 🛡️
