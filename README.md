@@ -1,95 +1,117 @@
-<h1>📦 Azure Storage Account – Terraform Generic Module</h1>
+# 📦 Azure Storage Account – Terraform Generic Module 🚀
 
-<p>
-A fully customizable, production-ready, and scalable Terraform module to deploy Azure Storage Accounts with 
-<strong>dynamic network rules</strong>, <strong>optional parameters</strong>, and clean reusable code.
+<p align="center">
+  <img src="https://img.shields.io/badge/Terraform-1.5%2B-blueviolet?style=for-the-badge&logo=terraform" alt="Terraform Version">
+  <img src="https://img.shields.io/badge/Azure-Provider%204.0%2B-blue?style=for-the-badge&logo=microsoftazure" alt="Azure Provider">
+  <img src="https://img.shields.io/badge/Status-Production--Ready-green?style=for-the-badge" alt="Status">
 </p>
 
-<hr>
+## 🌟 Overview
+This is a **High-Level Generic Terraform Module** designed to provision Azure Storage Accounts and all their associated sub-resources (Containers, File Shares, Queues, and Tables) using a single, unified configuration.
 
-<h2>📁 Folder Structure</h2>
+It leverages advanced Terraform features like `optional()`, `dynamic blocks`, and `for_each` to provide maximum flexibility with minimum code repetition.
 
-<pre>
+---
+
+## 🏗️ Architecture Diagram
+```mermaid
+graph TD
+    A[Terraform Configuration] --> B[Generic Storage Module]
+    B --> C{for_each}
+    C --> D[Storage Account 01]
+    C --> E[Storage Account 02]
+    
+    D --> D1[Blob Containers]
+    D --> D2[File Shares]
+    D --> D3[Queues]
+    D --> D4[Tables]
+    
+    E --> E1[Blob Containers]
+```
+
+---
+
+## ✨ Key Features
+- ✅ **Truly Generic** — Manage multiple storage accounts and their sub-resources in one `map`.
+- 🔐 **Security First** — Supports Managed Identity, TLS 1.2+, and Network Firewalls by default.
+- 📦 **Sub-resource Support** — Automatically flattens and creates Containers, Shares, Queues, and Tables.
+- 🛠️ **Dynamic Configuration** — Uses dynamic blocks for Network Rules, Identity, and Blob Properties.
+- 🧹 **Clean Variable Schema** — 90% of arguments are `optional()`, making your `tfvars` lean.
+
+---
+
+## 📁 Project Structure
+```text
 Storage_Account/
-│
-├── provider.tf        # Provider configurations
-├── resource.tf        # Root resource linking to module (optional)
-├── storage.tf         # Main storage account resource + dynamic blocks
-├── variables.tf       # Input variable definitions
-├── terraform.tfvars   # User-provided variable values
-└── README.md          # Documentation
-</pre>
+├── provider.tf        # ☁️ Azure Provider & Versioning
+├── resource.tf        # 🏗️ Resource Group (Shared)
+├── storage.tf         # ⚙️ Core Logic (Storage + Sub-resources)
+├── variables.tf       # 📝 Input Definitions with optionality
+├── terraform.tfvars   # 🛠️ User Configuration (Example)
+└── README.md          # 📖 Documentation (You are here)
+```
 
-<hr>
+---
 
-<h2>✨ Features</h2>
+## 🚀 How to Run
 
-<ul>
-  <li>✔ <strong>Generic Module</strong> — easily reusable for any storage account</li>
-  <li>✔ <strong>Dynamic Network Rules</strong> — add multiple firewall rules dynamically</li>
-  <li>✔ <strong>Optional Parameters</strong> — only set what you need</li>
-  <li>✔ <strong>Production Standards</strong> — versioned provider + clean structure</li>
-  <li>✔ <strong>Multiple Storage Accounts</strong> — uses <code>for_each</code> for scalability</li>
-</ul>
+### 1️⃣ Prerequisites
+- Azure CLI installed and authenticated (`az login`).
+- Terraform v1.5+ installed.
 
-<hr>
+### 2️⃣ Step-by-Step Execution
+```bash
+# Initialize the workspace and download providers
+terraform init
 
-<h2>🚀 How It Works</h2>
+# Validate the syntax and configuration
+terraform validate
 
-<p>This module uses:</p>
+# Preview the changes
+terraform plan -out=tfplan
 
-<ul>
-  <li><code>for_each</code> for creating multiple storage accounts</li>
-  <li><code>dynamic "network_rules"</code> for flexible inbound rules</li>
-  <li><code>optional()</code> in variables for clean & minimal tfvars</li>
-  <li>Strong typing using <code>object()</code> + <code>map()</code></li>
-</ul>
+# Apply the configuration
+terraform apply "tfplan"
+```
 
-<hr>
+---
 
-<h2>🛠️ Usage Example (terraform.tfvars)</h2>
+## 📊 Variable Stats & Types
 
-<p><em>Note:</em> Terraform configuration examples have been removed from this document. Please check the <strong><code>terraform.tfvars</code></strong> file in the repository for full example values and usage.</p>
+| Argument | Type | Required | Default | Description |
+| :--- | :--- | :---: | :---: | :--- |
+| `name` | `string` | Yes | - | Unique name of the storage account |
+| `resource_group_name` | `string` | Yes | - | Name of the RG |
+| `location` | `string` | Yes | - | Azure Region |
+| `account_tier` | `string` | Yes | - | Standard or Premium |
+| `account_replication_type`| `string` | Yes | - | LRS, GRS, ZRS, etc. |
+| `containers` | `map(object)` | No | `{}` | List of blob containers to create |
+| `shares` | `map(object)` | No | `{}` | List of file shares to create |
+| `identity` | `object` | No | `null` | System/User Assigned Identity |
 
-<hr>
+---
 
-<h2>🧩 Variables Overview</h2>
+## 💡 Example Usage (`terraform.tfvars`)
+```hcl
+strg = {
+  "my_storage" = {
+    name                     = "stgenericdemo001"
+    resource_group_name      = "storage_rg"
+    location                 = "West Europe"
+    account_tier             = "Standard"
+    account_replication_type = "LRS"
+    
+    containers = {
+      "data" = { name = "app-data", access_type = "private" }
+    }
+  }
+}
+```
 
-<p><em>Note:</em> Detailed variable type definitions have been removed from this document. See <strong><code>variables.tf</code></strong> in the repository for the full schema and optional defaults.</p>
+---
 
-<hr>
+## 🎯 Final Notes
+This module is built to be **Enterprise-Ready**. It follows Azure Best Practices for security and naming conventions.
 
-<h2>🧱 Main Resource (storage.tf)</h2>
-
-<p><em>Note:</em> The resource implementation was removed from this README. Please open <strong><code>storage.tf</code></strong> in the repo to view the storage account resource and dynamic blocks.</p>
-
-<hr>
-
-<h2>▶️ Run the Module</h2>
-
-<p>1️⃣ <strong>Initialize Terraform</strong><br><code>terraform init</code></p>
-
-<p>2️⃣ <strong>Validate Configuration</strong><br><code>terraform validate</code></p>
-
-<p>3️⃣ <strong>Plan Resources</strong><br><code>terraform plan</code></p>
-
-<p>4️⃣ <strong>Apply Changes</strong><br><code>terraform apply -auto-approve</code></p>
-
-<hr>
-
-<h2>🎯 Final Notes</h2>
-
-<p>
-This module is built to scale for <strong>any environment</strong> (Dev/QA/Prod).<br>
-Easy to integrate with <strong>Azure DevOps</strong>, <strong>GitHub Actions</strong>, and CI/CD pipelines.<br>
-Clean & reusable — perfect for teams and enterprise usage.
-</p>
-
-<hr>
-
-<h2>💡 Author</h2>
-
-<p>
-👩‍💻 <strong>Priya Jaiswal</strong><br>
-🌐 Terraform | Azure | DevOps
-</p>
+**Author:** प्रिया जायसवाल (Priya Jaiswal)  
+**Role:** Terraform & DevOps Architect 🛡️
