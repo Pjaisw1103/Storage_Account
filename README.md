@@ -1,104 +1,52 @@
-# 📦 Azure Storage Account Generic Module
+# Azure Storage Account Generic Terraform Module
 
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=Azure%20Storage%20Account%20Module&fontSize=40&fontAlignY=40&desc=Terraform%20%7C%20Azure%20Storage%20%7C%20Reusable%20Infrastructure&descAlignY=60&fontColor=ffffff&animation=fadeIn&color=0:0078D4,50:623CE4,100:0D1117"/>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Terraform-v1.5+-623CE4?style=for-the-badge&logo=terraform&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Azure-Provider%204.x-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Module-Reusable-success?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Status-Production%20Ready-22C55E?style=for-the-badge"/>
-</p>
+A clean, production-ready, and reusable Terraform module designed to provision and manage multiple Azure Storage Accounts along with associated sub-resources using a single map configuration.
 
 ---
 
-## 📌 Overview
+## Features
 
-A reusable Terraform module for provisioning **Azure Storage Accounts** and their associated resources using a single configuration.
-
-This module supports:
-
-* Blob Containers
-* File Shares
-* Storage Queues
-* Storage Tables
-* Managed Identity
-* Network Rules
-* Enterprise Security Controls
-
-Built using modern Terraform features such as `for_each`, `optional()`, `dynamic blocks`, and object-based configurations.
+- **Generic & Modular**: Deploy multiple storage accounts in a single execution using object maps.
+- **Sub-Resource Support**: Provisions Blob Containers, File Shares, Storage Queues, and Storage Tables dynamically.
+- **Enterprise Security**: Built-in support for TLS 1.2+, Managed Identities (System/User Assigned), and Network Rules (IP rules & Virtual Network Subnets).
+- **Data Protection**: Supports Blob Versioning, Change Feed, and Delete Retention Policies.
+- **Clean HCL Structure**: Utilizes modern Terraform features including `for_each`, `optional()`, and `dynamic` blocks.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
-
-A[Terraform Configuration]
---> B[Generic Storage Module]
-
-B --> C[Storage Account]
-
-C --> D[Blob Containers]
-C --> E[File Shares]
-C --> F[Queues]
-C --> G[Tables]
-
-C --> H[Managed Identity]
-C --> I[Network Rules]
+    A[Terraform Configuration] --> B[Generic Storage Module]
+    B --> C[Azure Storage Account]
+    C --> D[Blob Containers]
+    C --> E[File Shares]
+    C --> F[Queues]
+    C --> G[Tables]
+    C --> H[Managed Identity]
+    C --> I[Network Rules & Firewalls]
 ```
 
 ---
 
-## ✨ Key Features
-
-| Feature                 | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| 📦 Generic Module       | Manage multiple storage accounts using a single map |
-| 🔄 Reusable Design      | Eliminates repetitive Terraform code                |
-| ☁️ Azure Native         | Built specifically for Azure Storage services       |
-| 🔐 Security First       | Supports TLS, Managed Identity & Firewalls          |
-| ⚡ Dynamic Configuration | Uses dynamic blocks and optional attributes         |
-| 🚀 Enterprise Ready     | Suitable for production deployments                 |
-
----
-
-## 📊 Module Capabilities
-
-<p align="center">
-
-<img src="https://img.shields.io/badge/Blob%20Containers-Supported-0078D4?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/File%20Shares-Supported-623CE4?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/Queues-Supported-success?style=for-the-badge"/>
-
-<img src="https://img.shields.io/badge/Tables-Supported-orange?style=for-the-badge"/>
-
-</p>
-
----
-
-## 📂 Project Structure
+## Repository Structure
 
 ```text
 Storage_Account/
-│
-├── provider.tf
-├── resource.tf
-├── storage.tf
-├── variables.tf
-├── terraform.tfvars
-└── README.md
+├── provider.tf        # Terraform & Provider configuration (azurerm)
+├── resource.tf        # Resource Group definition
+├── storage.tf         # Storage Account & sub-resources logic
+├── variables.tf       # Input variable declarations & object schema
+├── terraform.tfvars   # Example input configuration values
+└── README.md          # Module documentation
 ```
 
 ---
 
-## 🚀 Usage
+## Quick Start
 
-### Module Configuration
+### 1. Module Integration
 
 ```hcl
 module "storage_accounts" {
@@ -108,30 +56,67 @@ module "storage_accounts" {
 }
 ```
 
----
-
-### Example Configuration
+### 2. Configuration Example (`terraform.tfvars`)
 
 ```hcl
 strg = {
-
-  my_storage = {
-
-    name                     = "stgenericdemo001"
-
-    resource_group_name      = "storage-rg"
-
+  "prod_storage" = {
+    name                     = "stgenericprod001"
+    resource_group_name      = "storage_rg"
     location                 = "West Europe"
-
     account_tier             = "Standard"
+    account_replication_type = "GRS"
+    account_kind             = "StorageV2"
+    access_tier              = "Hot"
 
-    account_replication_type = "LRS"
+    # Security & Access Controls
+    https_traffic_only_enabled      = true
+    min_tls_version                 = "TLS1_2"
+    public_network_access_enabled   = true
+    shared_access_key_enabled       = true
+    default_to_oauth_authentication = true
 
-    containers = {
-      data = {
-        name        = "app-data"
-        access_type = "private"
+    # Network Security Rules
+    network_rules = {
+      default_action             = "Deny"
+      ip_rules                   = ["103.1.1.1"]
+      bypass                     = ["AzureServices", "Logging", "Metrics"]
+      virtual_network_subnet_ids = []
+    }
+
+    # Managed Identity
+    identity = {
+      type = "SystemAssigned"
+    }
+
+    # Blob Service Retention
+    blob_properties = {
+      versioning_enabled  = true
+      change_feed_enabled = true
+      delete_retention_policy = {
+        days = 14
       }
+    }
+
+    # Containers
+    containers = {
+      "logs" = {
+        name                  = "app-logs"
+        container_access_type = "private"
+      }
+    }
+
+    # File Shares
+    shares = {
+      "files" = {
+        name  = "shared-files"
+        quota = 50
+      }
+    }
+
+    tags = {
+      Environment = "Production"
+      ManagedBy   = "Terraform"
     }
   }
 }
@@ -139,114 +124,49 @@ strg = {
 
 ---
 
-## 🛠️ Supported Resources
-
-| Resource         | Supported |
-| ---------------- | --------- |
-| Storage Account  | ✅         |
-| Blob Containers  | ✅         |
-| File Shares      | ✅         |
-| Queues           | ✅         |
-| Tables           | ✅         |
-| Managed Identity | ✅         |
-| Network Rules    | ✅         |
-| Private Access   | ✅         |
-
----
-
-## ⚙️ Deployment
-
-### Initialize Terraform
+## Deployment Steps
 
 ```bash
+# Initialize Terraform working directory
 terraform init
-```
 
-### Validate Configuration
-
-```bash
+# Validate configuration syntax
 terraform validate
-```
 
-### Preview Changes
+# Review execution plan
+terraform plan
 
-```bash
-terraform plan -out=tfplan
-```
-
-### Apply Infrastructure
-
-```bash
-terraform apply tfplan
+# Apply infrastructure changes
+terraform apply
 ```
 
 ---
 
-## 📤 Outputs
+## Module Inputs & Outputs
 
-```hcl
-output "storage_account_name" {
-  value = azurerm_storage_account.storage.name
-}
-```
+### Key Input (`var.strg`)
 
-Example:
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | `string` | Yes | Unique name of the storage account |
+| `resource_group_name` | `string` | Yes | Target Azure Resource Group name |
+| `location` | `string` | Yes | Azure region (e.g., `West Europe`) |
+| `account_tier` | `string` | Yes | Storage tier (`Standard` / `Premium`) |
+| `account_replication_type` | `string` | Yes | Replication type (`LRS`, `GRS`, `ZRS`, etc.) |
+| `network_rules` | `object` | No | Firewall rules and network restrictions |
+| `identity` | `object` | No | System-assigned or User-assigned identities |
+| `containers` | `map(object)` | No | Map of Blob Container configurations |
+| `shares` | `map(object)` | No | Map of File Share configurations |
 
-```text
-storage_account_name = "stgenericdemo001"
-```
+### Key Outputs
 
----
-
-## 🔐 Security Features
-
-* TLS 1.2 Enforcement
-* Managed Identity Support
-* Network Access Restrictions
-* Azure Firewall Compatibility
-* Secure Storage Defaults
+| Output Name | Description |
+| :--- | :--- |
+| `storage_account_name` | Primary deployed storage account name |
 
 ---
 
-## 📈 Why Use This Module?
+## Author
 
-* Reduces Terraform code duplication
-* Supports enterprise-scale deployments
-* Simplifies storage resource management
-* Uses modern Terraform design patterns
-* Easy to extend and maintain
-
----
-
-## 🎯 Learning Outcomes
-
-* Terraform Module Design
-* Azure Storage Services
-* Dynamic Blocks
-* Object-Based Variables
-* Infrastructure as Code
-* Enterprise Terraform Patterns
-
----
-
-## 👩‍💻 Author
-
-**Priya Jaiswal**
-
-Azure Cloud | DevOps | Terraform
-
-<p align="center">
-  <a href="https://github.com/Pjaisw1103">
-    <img src="https://img.shields.io/badge/GitHub-Pjaisw1103-181717?style=for-the-badge&logo=github"/>
-  </a>
-
-  <a href="https://linkedin.com/in/priya-jaiswal1103">
-    <img src="https://img.shields.io/badge/LinkedIn-Priya%20Jaiswal-0078D4?style=for-the-badge&logo=linkedin"/>
-  </a>
-</p>
-
----
-
-<p align="center">
-⭐ If this module helped you, consider giving it a star.
-</p>
+**Priya Jaiswal**  
+[GitHub](https://github.com/Pjaisw1103) • [LinkedIn](https://linkedin.com/in/priya-jaiswal1103)
